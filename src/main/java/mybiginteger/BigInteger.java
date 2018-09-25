@@ -616,6 +616,7 @@ public class BigInteger
         signum = 1;
         mag = prime.mag;
     }
+
     /**
      * This private constructor differs from its public cousin
      * with the arguments reversed in two ways: it assumes that its
@@ -625,6 +626,7 @@ public class BigInteger
         this.signum = (magnitude.length == 0 ? 0 : signum);
         this.mag = magnitude;
     }
+
     /**
      * This private constructor is for internal use and assumes that its
      * arguments are correct.
@@ -3328,7 +3330,14 @@ public class BigInteger
      * supposed to be the same as in method modPow().
      */
     public BigInteger myModPow(BigInteger exponent, BigInteger m) {
-        return BigInteger.ZERO;
+        var i = BigInteger.ZERO;
+        var cur = BigInteger.valueOf(1);
+        while (i.compareTo(exponent) < 0) {
+            cur = cur.multiply(this);
+            i = i.add(BigInteger.valueOf(1));
+        }
+
+        return cur.mod(m);
     }
 
     /**
