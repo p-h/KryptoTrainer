@@ -2047,7 +2047,7 @@ public class BigInteger
             int p = m.getLowestSetBit(); // Max pow of 2 that divides m
 
             BigInteger m1 = m.shiftRight(p); // m/2**p
-            BigInteger m2 = ONE.shiftLeft(p); // 2**p
+            BigInteger m2 = valueOf(1).shiftLeft(p); // 2**p
 
             // Calculate new base from m1
             BigInteger base2 = (this.signum < 0 || this.compareTo(m1) >= 0
@@ -3330,14 +3330,21 @@ public class BigInteger
      * supposed to be the same as in method modPow().
      */
     public BigInteger myModPow(BigInteger exponent, BigInteger m) {
-        var i = BigInteger.ZERO;
         var cur = BigInteger.valueOf(1);
-        while (i.compareTo(exponent) < 0) {
-            cur = cur.multiply(this);
-            i = i.add(BigInteger.valueOf(1));
+        for (int i = 0; i < exponent.bitLength(); i++) {
+            if (exponent.testBit(i)) {
+                // ?!? cur = cur.multiply(this.shiftLeft(i).mod(m)).mod(m);
+                var ak = this;
+                for (int j = 0; j < i; j++) {
+                    // (Funktioniert nicht) ak = ak.shiftLeft(1).mod(m);
+                    ak = ak.multiply(ak).mod(m);
+                }
+                cur = cur.multiply(ak).mod(m);
+            }
+
         }
 
-        return cur.mod(m);
+        return cur;
     }
 
     /**
