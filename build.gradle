@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group 'org.hurlimann'
@@ -7,6 +8,8 @@ version '1.0-SNAPSHOT'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
+
+mainClassName = 'kryptotrainer.KryptoTrainerClass'
 
 repositories {
     mavenCentral()
