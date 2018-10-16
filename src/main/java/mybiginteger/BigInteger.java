@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamField;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -1480,8 +1481,28 @@ public class BigInteger
         if (bitLength < 2) {
             throw new ArithmeticException("bitLength < 2");
         }
+        byte[] nArray = new byte[bitLength / 8];
+        Arrays.fill(nArray, Byte.MIN_VALUE);
+        nArray[0] = Byte.MAX_VALUE;
+        BigInteger n = new BigInteger(nArray);
 
-        return ZERO;
+        byte[] bytes = new byte[bitLength / 8];
+
+        BigInteger e = n.subtract(BigInteger.ONE);
+
+        next_prime:
+        while (true) {
+            rnd.nextBytes(bytes);
+            BigInteger a = new BigInteger(bytes);
+            for (int i = 0; i < certainity; i++) {
+                BigInteger r = a.modPow(e, n);
+                if (!r.equals(BigInteger.ONE) || !a.gcd(n).equals(BigInteger.ONE)) {
+                    continue next_prime;
+                }
+            }
+            return a;
+        }
+
     }
 
     /**
@@ -1672,7 +1693,7 @@ public class BigInteger
      */
     private boolean passesMillerRabin(int iterations) {
         // Find a and m such that m is odd and this == 1 + 2**a * m
-        BigInteger thisMinusOne = this.subtract(ONE);
+        BigInteger thisMinusOne = this.subtract(BigInteger.valueOf(1));
         BigInteger m = thisMinusOne;
         int a = m.getLowestSetBit();
         m = m.shiftRight(a);
@@ -3330,13 +3351,11 @@ public class BigInteger
      * supposed to be the same as in method modPow().
      */
     public BigInteger myModPow(BigInteger exponent, BigInteger m) {
-        var cur = BigInteger.valueOf(1);
+        BigInteger cur = BigInteger.valueOf(1);
         for (int i = 0; i < exponent.bitLength(); i++) {
             if (exponent.testBit(i)) {
-                // ?!? cur = cur.multiply(this.shiftLeft(i).mod(m)).mod(m);
-                var ak = this;
+                BigInteger ak = this;
                 for (int j = 0; j < i; j++) {
-                    // (Funktioniert nicht) ak = ak.shiftLeft(1).mod(m);
                     ak = ak.multiply(ak).mod(m);
                 }
                 cur = cur.multiply(ak).mod(m);
@@ -3353,7 +3372,20 @@ public class BigInteger
      * Note that the factors p and q are assumed to be prime numbers.
      */
     public BigInteger myModPow(BigInteger exponent, BigInteger p, BigInteger q) {
-        return BigInteger.ZERO;
+        BigInteger m1 = p;
+        BigInteger m2 = q;
+
+        BigInteger a1 = this.myModPow(exponent, m1);
+        BigInteger a2 = this.myModPow(exponent, m2);
+
+        BigInteger u1 = m2.modInverse(m1);
+        BigInteger u2 = m1.modInverse(m2);
+
+
+        BigInteger x1 = a1.multiply(u1).multiply(m2);
+        BigInteger x2 = a2.multiply(u2).multiply(m1);
+
+        return x1.add(x2);
     }
 
     /**

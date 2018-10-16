@@ -6,6 +6,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Random;
 
 /**
  * <p>Title: KryptoTrainer</p>
@@ -21,51 +24,50 @@ import java.awt.event.ActionListener;
 /**
  * Programmierschnittstelle
  * ========================
- *
+ * <p>
  * Variabeln:
  * ----------
- *
- *    datenSatzUnverschl[5]:
- *           BigInteger-Variabeln, welche die unverschlüsselten Datensätze F_i enthalten.
- *
- *    schluessel[5]:
- *           BigInteger-Variabeln, welche die Read-Keys p_i der einzelnen Benutzer enthalten.
- *
- *    datenbankVerschl:
- *           BigInteger-Variable, welche die gesamte verschlüsselte Datenbank E entält.
- *
- *    datenSatzEntschl[5]:
- *           BigInteger-Variabeln, welche die entschlüsselten Datensätze F_i enthalten.
- *
- *
+ * <p>
+ * datenSatzUnverschl[5]:
+ * BigInteger-Variabeln, welche die unverschlüsselten Datensätze F_i enthalten.
+ * <p>
+ * schluessel[5]:
+ * BigInteger-Variabeln, welche die Read-Keys p_i der einzelnen Benutzer enthalten.
+ * <p>
+ * datenbankVerschl:
+ * BigInteger-Variable, welche die gesamte verschlüsselte Datenbank E entält.
+ * <p>
+ * datenSatzEntschl[5]:
+ * BigInteger-Variabeln, welche die entschlüsselten Datensätze F_i enthalten.
+ * <p>
+ * <p>
  * Methoden die fertig zur Verügung stehen:
  * ----------------------------------------
- *
- *    private void schluesselAnzeigen()
- *           Zeigt die Werte der Variabeln schluessel[0...4] in den entsprechenden
- *           Textfeldern an.
- *
- *    private void datenbankVerschlAnzeigen()
- *           Zeigt die Variable datenbankVerschl im entsprechenden
- *           Textfeld an.
- *
- *    private void datenSatzEntschlAnzeigen()
- *           Zeigt die Werte der Variabeln datenSatzEntschl[0...4]
- *           in den entsprechenden Textfeldern an.
- *
- *
+ * <p>
+ * private void schluesselAnzeigen()
+ * Zeigt die Werte der Variabeln schluessel[0...4] in den entsprechenden
+ * Textfeldern an.
+ * <p>
+ * private void datenbankVerschlAnzeigen()
+ * Zeigt die Variable datenbankVerschl im entsprechenden
+ * Textfeld an.
+ * <p>
+ * private void datenSatzEntschlAnzeigen()
+ * Zeigt die Werte der Variabeln datenSatzEntschl[0...4]
+ * in den entsprechenden Textfeldern an.
+ * <p>
+ * <p>
  * Methoden die ausprogrammiert werden müssen (nur Stubs vorhanden):
  * -----------------------------------------------------------------
- *
- *    private void doDatenbankVerschl(void)
- *           Erstellt die Read-Keys, verschlüsselt damit die
- *           Datenbank und zeigt die Read-Keys sowie die verschlüsselte
- *           Datenbank an.
- *
- *    private void doDatenbankEntschl(void)
- *           Berechnet mithilfe der Read-Keys aus der verschlüsselten Datenbank
- *           die einzelnen Datensätze und zeigt diese an.
- *
+ * <p>
+ * private void doDatenbankVerschl(void)
+ * Erstellt die Read-Keys, verschlüsselt damit die
+ * Datenbank und zeigt die Read-Keys sowie die verschlüsselte
+ * Datenbank an.
+ * <p>
+ * private void doDatenbankEntschl(void)
+ * Berechnet mithilfe der Read-Keys aus der verschlüsselten Datenbank
+ * die einzelnen Datensätze und zeigt diese an.
  */
 
 public class FrameSerie3 extends JFrame implements ActionListener {
@@ -277,13 +279,45 @@ public class FrameSerie3 extends JFrame implements ActionListener {
         }
     }
 
+
     /**
      * Diese Methode muss ausprogrammiert werden!
      */
     private void doDatenbankVerschl() {
+        Random rnd;
+        try {
+            rnd = SecureRandom.getInstanceStrong();
+        } catch (NoSuchAlgorithmException ex) {
+            /*
+             * Every implementation of the Java platform is required to
+             * support at least one strong SecureRandom implementation.
+             * This means that this exception will never occur(TM). 😆🔫
+             */
+            throw new IllegalStateException(ex);
+        }
         // Schluessel erzeugen
+        for (int i = 0; i < this.schluessel.length; i++) {
+            int bitLenght = this.schluessel[i].bitLength() + 1;
+            int certainity = 10; // around 99.9%
+            BigInteger p = BigInteger.myProbableSecurePrime(bitLenght, certainity, rnd);
+            this.schluessel[i] = p;
+        }
 
         // Datenbank verschlüsseln
+        BigInteger m = BigInteger.ONE;
+        for (BigInteger mi : this.schluessel) {
+            m = m.multiply(mi);
+        }
+
+        for (int i = 0; i < this.schluessel.length; i++) {
+            BigInteger ai = this.datenSatzUnverschl[i];
+            BigInteger mi = this.schluessel[i];
+            BigInteger Mi = m.divide(mi);
+
+            BigInteger ui = Mi.modInverse(mi);
+
+            this.datenbankVerschl = this.datenbankVerschl.add(ai.multiply(ui).multiply(Mi));
+        }
 
         // Ergebnisse anzeigen
         schluesselAnzeigen();
@@ -294,7 +328,10 @@ public class FrameSerie3 extends JFrame implements ActionListener {
      * Diese Methode muss ausprogrammiert werden!
      */
     private void doDatenbankEntschl() {
-        // Datenbank entschlüsseln
+        for (int i = 0; i < this.schluessel.length; i++) {
+            BigInteger m = this.schluessel[i];
+            this.datenSatzEntschl[i] = this.datenbankVerschl.mod(m);
+        }
 
         // Ergebnisse anzeigen
         datenSatzEntschlAnzeigen();
