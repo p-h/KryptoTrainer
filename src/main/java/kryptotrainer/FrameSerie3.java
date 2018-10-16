@@ -6,9 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <p>Title: KryptoTrainer</p>
@@ -285,21 +284,12 @@ public class FrameSerie3 extends JFrame implements ActionListener {
      */
     private void doDatenbankVerschl() {
         Random rnd;
-        try {
-            rnd = SecureRandom.getInstanceStrong();
-        } catch (NoSuchAlgorithmException ex) {
-            /*
-             * Every implementation of the Java platform is required to
-             * support at least one strong SecureRandom implementation.
-             * This means that this exception will never occur(TM). 😆🔫
-             */
-            throw new IllegalStateException(ex);
-        }
+        rnd = ThreadLocalRandom.current();
         // Schluessel erzeugen
         for (int i = 0; i < this.schluessel.length; i++) {
-            int bitLenght = this.schluessel[i].bitLength() + 1;
+            int bitLenght = this.datenSatzUnverschl[i].bitLength() + 1;
             int certainity = 10; // around 99.9%
-            BigInteger p = BigInteger.myProbableSecurePrime(bitLenght, certainity, rnd);
+            BigInteger p = BigInteger.probablePrime(bitLenght, rnd);
             this.schluessel[i] = p;
         }
 

@@ -3375,6 +3375,7 @@ public class BigInteger
     public BigInteger myModPow(BigInteger exponent, BigInteger p, BigInteger q) {
         BigInteger m1 = p;
         BigInteger m2 = q;
+        BigInteger m = m1.multiply(m2);
 
         BigInteger a1 = this.myModPow(exponent, m1);
         BigInteger a2 = this.myModPow(exponent, m2);
@@ -3382,11 +3383,10 @@ public class BigInteger
         BigInteger u1 = m2.modInverse(m1);
         BigInteger u2 = m1.modInverse(m2);
 
-
         BigInteger x1 = a1.multiply(u1).multiply(m2);
         BigInteger x2 = a2.multiply(u2).multiply(m1);
 
-        return x1.add(x2);
+        return x1.add(x2).mod(m);
     }
 
     /**
