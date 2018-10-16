@@ -162,16 +162,6 @@ public class BigInteger
     private static BigInteger negConst[] = new BigInteger[MAX_CONSTANT + 1];
     private static final BigInteger SMALL_PRIME_PRODUCT
             = valueOf(3L * 5 * 7 * 11 * 13 * 17 * 19 * 23 * 29 * 31 * 37 * 41);
-    /**
-     * The BigInteger constant one.
-     *
-     * @since 1.2
-     */
-    public static final BigInteger ONE = valueOf(1);
-    /**
-     * The BigInteger constant two.  (Not exported.)
-     */
-    private static final BigInteger TWO = valueOf(2);
     /* zero[i] is a string of i consecutive zeros. */
     private static String zeros[] = new String[64];
     /*
@@ -248,6 +238,17 @@ public class BigInteger
             zeros[i] = zeros[63].substring(0, i);
         }
     }
+
+    /**
+     * The BigInteger constant one.
+     *
+     * @since 1.2
+     */
+    public static final BigInteger ONE = valueOf(1);
+    /**
+     * The BigInteger constant two.  (Not exported.)
+     */
+    private static final BigInteger TWO = valueOf(2);
 
     /**
      * The signum of this BigInteger: -1 for negative, 0 for zero, or
