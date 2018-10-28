@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamField;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Immutable arbitrary-precision integers.  All operations behave as if
@@ -1461,7 +1462,32 @@ public class BigInteger
      * tableOfPrimes.
      */
     public static int[] createTableOfPrimes(int max) {
-        return null;
+        boolean[] sieve = new boolean[max + 1];
+        int n_primes = sieve.length - 2;
+        for (int i = 2; i < sieve.length; i++) {
+            sieve[i] = true;
+        }
+
+        for (int z = 2; z * z < sieve.length; z++) {
+            for (int nz = z + z; nz < sieve.length; nz += z) {
+                if (sieve[nz]) {
+                    sieve[nz] = false;
+                    n_primes--;
+                }
+            }
+        }
+
+        int[] primes = new int[n_primes];
+        int sieve_i = 0;
+        for (int i = 0; i < primes.length; i++) {
+            while (!sieve[sieve_i]) sieve_i++;
+            primes[i] = sieve_i;
+            sieve_i++;
+        }
+
+        tableOfPrimes = Arrays.copyOf(primes, primes.length);
+
+        return primes;
     }
 
     /**
@@ -3416,6 +3442,23 @@ public class BigInteger
      * false if it's definitely composite.
      */
     public boolean myIsProbablePrime(int t) {
+        if (this.bitLength() <= 31
+                && Arrays.binarySearch(tableOfPrimes, this.intValue()) >= 0) {
+            return true;
+        }
+
+        for (int i = 0; i < t; i++) {
+            BigInteger n_1 = this.subtract(ONE);
+            BigInteger a;
+            do {
+                a = new BigInteger(this.bitLength(), ThreadLocalRandom.current());
+            } while (a.compareTo(this) <= 0);
+
+            BigInteger r = a.modPow(this.subtract(ONE), this);
+
+            if (!r.equals(ONE) || !this.gcd(a).equals(ONE)) return false;
+        }
+
         return true;
     }
 
