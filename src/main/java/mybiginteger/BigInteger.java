@@ -3442,7 +3442,8 @@ public class BigInteger
      * false if it's definitely composite.
      */
     public boolean myIsProbablePrime(int t) {
-        if (this.bitLength() <= 31
+        if (tableOfPrimes != null
+                && this.bitLength() <= 31
                 && Arrays.binarySearch(tableOfPrimes, this.intValue()) >= 0) {
             return true;
         }
@@ -3452,9 +3453,9 @@ public class BigInteger
             BigInteger a;
             do {
                 a = new BigInteger(this.bitLength(), ThreadLocalRandom.current());
-            } while (a.compareTo(this) <= 0);
+            } while (a.compareTo(n_1) >= 0);
 
-            BigInteger r = a.modPow(this.subtract(ONE), this);
+            BigInteger r = a.modPow(n_1, this);
 
             if (!r.equals(ONE) || !this.gcd(a).equals(ONE)) return false;
         }
