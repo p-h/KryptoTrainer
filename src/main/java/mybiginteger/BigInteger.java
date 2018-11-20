@@ -3505,7 +3505,30 @@ public class BigInteger
      * Returns an integer factor of this, or ONE if this is prime.
      */
     public BigInteger myPollardRho() {
-        return BigInteger.ONE;
+        BigInteger n = this;
+
+        if (n.isProbablePrime(100)) {
+            return n;
+        }
+
+        BigInteger a = ONE;
+        while (true) {
+            BigInteger x = randomNumberBellow(n);
+            BigInteger y = x;
+            BigInteger i = ZERO;
+            while (n.compareTo(i) > 0) {
+                x = x.modPow(TWO, n).add(a).mod(n);
+                y = y.modPow(TWO, n).add(a).modPow(TWO, n).add(a).mod(n);
+
+                BigInteger d = x.subtract(y).gcd(n);
+
+                if (!d.equals(n) && d.compareTo(ONE) > 0) {
+                    return d;
+                }
+
+                i.add(ONE);
+            }
+        }
     }
 
     /**
