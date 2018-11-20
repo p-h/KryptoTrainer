@@ -3483,7 +3483,15 @@ public class BigInteger
      * of the square root of this.
      */
     public BigInteger mySqrtFloor() {
-        return BigInteger.ZERO;
+        BigInteger xn = this.shiftRight(this.bitLength() / 2);
+        BigInteger x;
+
+        do {
+            x = xn;
+            xn = x.multiply(x).add(this).divide(x.multiply(TWO));
+        } while (!x.equals(xn));
+
+        return xn;
     }
 
     /**
