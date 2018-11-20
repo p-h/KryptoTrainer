@@ -8,6 +8,9 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static java.lang.Math.log;
+import static java.util.Arrays.stream;
+
 /**
  * Immutable arbitrary-precision integers.  All operations behave as if
  * BigIntegers were represented in two's-complement notation (like Java's
@@ -1508,28 +1511,34 @@ public class BigInteger
         if (bitLength < 2) {
             throw new ArithmeticException("bitLength < 2");
         }
-        byte[] nArray = new byte[bitLength / 8];
-        Arrays.fill(nArray, Byte.MIN_VALUE);
-        nArray[0] = Byte.MAX_VALUE;
-        BigInteger n = new BigInteger(nArray);
 
-        byte[] bytes = new byte[bitLength / 8];
+        BigInteger five = BigInteger.valueOf(5);
+        BigInteger six = BigInteger.valueOf(6);
 
-        BigInteger e = n.subtract(BigInteger.ONE);
 
-        next_prime:
         while (true) {
-            rnd.nextBytes(bytes);
-            BigInteger a = new BigInteger(bytes);
-            for (int i = 0; i < certainity; i++) {
-                BigInteger r = a.modPow(e, n);
-                if (!r.equals(BigInteger.ONE) || !a.gcd(n).equals(BigInteger.ONE)) {
-                    continue next_prime;
+            BigInteger p = new BigInteger(bitLength, rnd);
+            {
+                BigInteger q = p.subtract(ONE).divide(TWO);
+                if (!q.mod(six).equals(five)) {
+                    continue;
                 }
             }
-            return a;
-        }
+            boolean failsSecondTest = tableOfPrimes != null && stream(tableOfPrimes).skip(1)
+                    .mapToObj(BigInteger::valueOf)
+                    .anyMatch(r -> {
+                        BigInteger q = r.subtract(ONE).divide(TWO).mod(r);
+                        return p.equals(TWO.multiply(q).subtract(ONE));
+                    });
 
+            if (failsSecondTest) {
+                continue;
+            }
+
+            if (p.isProbablePrime(certainity)) {
+                return p;
+            }
+        }
     }
 
     /**
@@ -3450,10 +3459,7 @@ public class BigInteger
 
         for (int i = 0; i < t; i++) {
             BigInteger n_1 = this.subtract(ONE);
-            BigInteger a;
-            do {
-                a = new BigInteger(this.bitLength(), ThreadLocalRandom.current());
-            } while (a.compareTo(n_1) >= 0);
+            BigInteger a = randomNumberBellow(n_1);
 
             BigInteger r = a.modPow(n_1, this);
 
@@ -3461,6 +3467,15 @@ public class BigInteger
         }
 
         return true;
+    }
+
+    public static BigInteger randomNumberBellow(BigInteger n) {
+        BigInteger a;
+        Random rnd = ThreadLocalRandom.current();
+        do {
+            a = new BigInteger(n.bitLength(), rnd);
+        } while (a.compareTo(n) >= 0);
+        return a;
     }
 
     /**
@@ -3490,10 +3505,7 @@ public class BigInteger
      * Hint: Use Math.log() to compute the logarithm.
      */
     public int findExp(BigInteger r) {
-        int result = 0;
-
-
-        return result;
+        return (int) (log(r.doubleValue()) / log(this.doubleValue()));
     }
 
     /**
@@ -3501,11 +3513,29 @@ public class BigInteger
      */
 
     public BigInteger findFactor(BigInteger B) {
+        if (B.bitLength() > 31) {
+            throw new ArithmeticException("B is too large");
+        }
 
-        BigInteger result = new BigInteger("0");
+        int[] primes = createTableOfPrimes(B.intValue());
 
+        BigInteger n = this;
 
-        return result;
+        while (true) {
+            BigInteger a = randomNumberBellow(n);
+
+            BigInteger k = BigInteger.ONE;
+
+            for (int q : primes) {
+                int e = n.findExp(B);
+                k = k.multiply(BigInteger.valueOf(q).pow(e));
+            }
+
+            BigInteger f = a.modPow(k, B).gcd(n);
+            if (ONE.compareTo(f) < 0 && f.compareTo(n) < 0) {
+                return f;
+            }
+        }
     }
 
     /**
